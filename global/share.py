@@ -7,6 +7,7 @@ from discord.ext import commands
 from .set import load_channels
 from .user import get_display_name, get_avatar_url, get_guild_name
 from .check import schedule_result_reaction
+from .ban import is_banned
 
 
 async def get_or_create_webhook(channel: discord.TextChannel) -> Optional[discord.Webhook]:
@@ -90,6 +91,14 @@ class ShareCog(commands.Cog):
 
         channels = load_channels()
         if message.channel.id not in channels:
+            return
+
+        # グローバルチャットBANされているユーザーのメッセージは転送せず、削除する
+        if is_banned(message.author.id):
+            try:
+                await message.delete()
+            except discord.HTTPException:
+                pass
             return
 
         content = message.content

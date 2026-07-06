@@ -19,6 +19,8 @@ INITIAL_EXTENSIONS = [
     "global.set",
     "global.share",
     "global.joinlog",
+    "global.ban",
+    "global.help",
 ]
 
 
