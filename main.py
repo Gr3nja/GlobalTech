@@ -14,6 +14,27 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+
+@bot.check
+def block_dm_prefix_commands(ctx: commands.Context) -> bool:
+    """!から始まるコマンド(!global_banなど)をDMでは実行できないようにする"""
+    return ctx.guild is not None
+
+
+async def block_dm_slash_commands(interaction: discord.Interaction) -> bool:
+    """スラッシュコマンド(/globalなど)をDMでは実行できないようにする"""
+    if interaction.guild is None:
+        await interaction.response.send_message(
+            "このコマンドはサーバー内でのみ使用できます。", ephemeral=True
+        )
+        return False
+    return True
+
+
+# CommandTreeのinteraction_checkを上書きして、DMでのスラッシュコマンド実行を禁止する
+bot.tree.interaction_check = block_dm_slash_commands
+
+
 # 読み込むCog(拡張機能)の一覧
 INITIAL_EXTENSIONS = [
     "global.set",
@@ -27,6 +48,13 @@ INITIAL_EXTENSIONS = [
 @bot.event
 async def on_ready():
     print(f"ログインしました: {bot.user} (ID: {bot.user.id})")
+
+    # Botのステータスメッセージを設定(種類表示なしでテキストのみ)
+    await bot.change_presence(
+        status=discord.Status.online,  # online / idle / dnd / invisible
+        activity=discord.CustomActivity(name="/global | グローバルチャット"),
+    )
+
     try:
         synced = await bot.tree.sync()
         print(f"スラッシュコマンドを{len(synced)}個同期しました。")
